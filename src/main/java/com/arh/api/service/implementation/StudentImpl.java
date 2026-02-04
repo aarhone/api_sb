@@ -1,5 +1,6 @@
 package com.arh.api.service.implementation;
 import java.util.List;
+import java.util.Map;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -64,11 +65,46 @@ public class StudentImpl implements StudentService {
     }
 
     @Override
-    public void deleteStudnetById(Long id){
+    public void deleteStudnet(Long id){
         if(!studentRepository.existsById(id)){
             throw new IllegalArgumentException("Student does not exists by id: "+id);
         }
         studentRepository.deleteById(id);
+    }
+
+    @Override
+    public StudentDto updateStudent(Long id, AddStudentRequestDto addStudentRequestDto){
+        Student student = studentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Student not found with ID: "+id));
+
+        // Maping the user input to student obj
+        modelMapper.map(addStudentRequestDto, student);
+
+        studentRepository.save(student);
+
+        return modelMapper.map(student, StudentDto.class);
+
+    } 
+
+    @Override
+    public StudentDto patchStudent(Long id, Map<String, Object> patchMap){
+        Student student = studentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid ID: "+id));
+
+        patchMap.forEach( (keyfiled, val) -> {
+            // Setter method of Student class.
+            switch (keyfiled) {
+                case "name" -> student.setName((String) val);
+
+                case "email" -> student.setEmail((String) val);
+            
+                default -> throw new IllegalArgumentException("Inallid filed: "+keyfiled);
+            } 
+            
+        } );
+
+        studentRepository.save(student);
+         return modelMapper.map(student, StudentDto.class);
+        
+
     }
 
 }
